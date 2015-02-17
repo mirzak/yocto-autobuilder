@@ -20,7 +20,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import os, sys, optparse, subprocess
+import os, sys, optparse, subprocess, datetime
 from socket import gethostname
 import ConfigParser
 
@@ -79,10 +79,15 @@ if os.path.isfile(os.path.join(AB_BASE, ".setupdone")):
         os.chdir(AB_BASE)
         if os.environ["OPTIMIZED_GIT_CLONE"] == "True":
             os.chdir(AB_BASE)
-            subprocess.Popen("python bin/buildworker-janitor " + os.path.join(AB_BASE, "config/autobuilder.conf") + ">> yocto-worker/janitor.log 2>&1", 
+            janitor_log = open('yocto-worker/janitor.log', 'a')
+            janitor_log.write('[ janitor started: %s ]' % datetime.datetime.now())
+            janitor_log.write('\n')
+            subprocess.Popen("python bin/buildworker-janitor " + os.path.join(AB_BASE, "config/autobuilder.conf"), 
                            shell=True, stdin=None, 
-                           stdout=None, stderr=None, 
+                           stdout=janitor_log,
+                           stderr=janitor_log, 
                            close_fds=True)
+            janitor_log.close()
 else:
     print "You have not sourced ./yocto-autobuilder-setup. Please do so first!"
     print ""
