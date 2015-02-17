@@ -33,3 +33,8 @@ yocto-worker/nightly/build(newcommits)
 yocto-worker/twistd.hostname
 yocto-worker/twistd.log*
 yocto-worker/twistd.pid
+
+# This gets updated on every yocto-setup-autobuilder so should be ignored #
+# for nearly everyone.                                                    #
+###########################################################################
+bin/worker-init
