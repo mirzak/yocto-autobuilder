@@ -170,12 +170,12 @@ scheduler: A list of dicts. Each item defines a scheduler associated with this
                     This defaults to '*', meaning every month.
                dayOfWeek: The day of the week in which to start the build, with
                     Monday = 1.  This defaults to '*', meaning every day.
-	       hour: The hour of the day in which to start the build, with 
+               hour: The hour of the day in which to start the build, with
                     12:00 AM = 0.  This must be set by the user.
-	       minute: The minute of the hour in which to start the build, with
+               minute: The minute of the hour in which to start the build, with
                     0 to 59 as valid values.  This must be set by the user.
 
-	  SingleBranchScheduler properties:
+       SingleBranchScheduler properties:
                repository: the repository to attach the scheduler to; this
                     is the repo name from the 'repos' section; the branch which
                     the scheduler is attached to matches that in the repo
@@ -185,7 +185,7 @@ scheduler: A list of dicts. Each item defines a scheduler associated with this
                     triggering build to allow for changes to settle.  Defaults
                     to 60 seconds.
 
-	       change-user: the user name which the remote hook will use; the
+               change-user: the user name which the remote hook will use; the
                     default value is the repository name as per the 'repository'
                     property.
 
@@ -209,7 +209,7 @@ scheduler: A list of dicts. Each item defines a scheduler associated with this
            Extra Notes on SingleBranchScheduler setup
            ------------------------------------------
 
-	   There is one SBS scheduler for each repository in the buildset, i.e.,
+           There is one SBS scheduler for each repository in the buildset, i.e.,
            if your buildset contains more repositories, and you want build
            triggered by changes to any of them, you need to define a scheduler
            for each. This also means that you can mix and match, e.g., only
@@ -272,8 +272,8 @@ steps: [{'SetDest':{}},
         {'PublishArtifacts': {'artifacts': ['qemux86', 'atom-pc']}}]
 scheduler: [{'dev-branch-scheduler' :
                 {'type':'SingleBranchScheduler',
-		 'repository':'poky',
-		 'stable-timer':30,
+                 'repository':'poky',
+                 'stable-timer':30,
                  'change-password':'secret_change_password'}}]
 
 Adding Buildsteps
