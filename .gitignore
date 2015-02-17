@@ -4,6 +4,11 @@
 *.so
 *.pyc
 
+# Configuration hunks, changed by anyone using AB #
+###################################################
+buildset-config
+config/autobuilder.conf
+
 # Everything else #
 ###################
 *.log.*
@@ -22,6 +27,7 @@ yocto-controller/twistd.log*
 yocto-controller/buildbot.tac
 yocto-worker/build-appliance/build(newcommits)
 yocto-worker/buildbot.tac
+yocto-worker/janitor.log
 yocto-worker/nightly-x86/.buildbot-sourcedata-YnVpbGQ=
 yocto-worker/nightly/build(newcommits)
 yocto-worker/twistd.hostname
