@@ -17,6 +17,8 @@ BUILD_HISTORY_WEB_DIR = "/tmp/buildhistory-web"
 ERROR_REPORT_COLLECT = True
 #ERROR_REPORT_SERVER = "http://yourerrorreport.url.com"
 #ERROR_REPORT_DIR = "/path/to/error/logs"
+#ERROR_REPORT_EMAIL = "autobuilder@error-report.yourproject.org"
+#ERROR_REPORT_NAME = "MyProject Autobuilder"
 
 [PublishSettings]
 PUBLISH_BUILDS = True
