@@ -10,7 +10,6 @@ c = BuildmasterConfig = {}
 # PROJECT IDENTITY #
 ####################
 
-users = [('<USER>', '<PASS>')]
 c['debugPassword'] = "<PASS>"
 
 # the 'title' string will appear at the top of this buildbot
@@ -66,14 +65,20 @@ c['workerPortnum'] = 9989
 c['status'] = []
 from buildbot.status.html import WebStatus
 from buildbot.status.web.authz import Authz
-from buildbot.status.web.auth import BasicAuth
-authz_cfg=Authz(auth=BasicAuth(users),
-	forceBuild = 'auth',
-	stopBuild = 'auth',
-	stopAllBuilds = 'auth',
-	cancelAllPendingBuilds = 'auth',
-	cancelPendingBuild = 'auth',
-	pingBuilder = False)
+from buildbot.status.web.auth import HTPasswdAuth
+authz_cfg=Authz(auth=HTPasswdAuth('<HTPASSWDPATH>'),
+    forceBuild = 'auth',
+    stopBuild = 'auth',
+    stopAllBuilds = 'auth',
+    cancelAllPendingBuilds = 'auth',
+    cancelPendingBuild = 'auth',
+    gracefulShutdown = 'auth',
+    forceAllBuilds = False,
+    stopChange = False,
+    cleanShutdown = 'auth',
+    showUsersPage = 'auth',
+    pauseSlave = 'auth',
+    pingBuilder = False)
 c['status'].append(WebStatus(http_port=8010, authz=authz_cfg))
 
 ##########

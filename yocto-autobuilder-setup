@@ -90,7 +90,7 @@ if [ ! -f  "${PWD}/yocto-controller/controller.cfg" ]; then
 fi
 
 if [ "${PWD}/yocto-controller/controller.cfg" ]; then
-    config_check=`cat ${PWD}/yocto-controller/controller.cfg|grep "'<USER>', '<PASS>'"`
+    config_check=`cat ${PWD}/yocto-controller/controller.cfg|grep "<PASS>"`
 fi
 
 #########################################
@@ -132,27 +132,20 @@ fi
 
 if [ -n "${config_check:+x}" ]; then
     echo ""
-    echo " You've not setup the autobuilder before. Generating a username/password"
+    echo " You've not setup the autobuilder before. Generating a server/client password"
     echo " combo for you."
-    echo ""
-    username=`cat /dev/urandom|tr -dc "a-zA-Z0-9"|fold -w 9|head -n1`
-    echo " Username = $username " 
     password=`cat /dev/urandom|tr -dc "a-zA-Z0-9"|fold -w 9|head -n1`
-    echo " Password = $password " 
+    echo " Client/Server Password = $password " 
     echo ""
-    echo " Modifying the following files with this username/password:"
+    echo " Modifying the following files with this password:"
     echo ""
     echo " ${PWD}/yocto-controller/controller.cfg "
-    sed -i "s/<USER>/$username/g" ${PWD}/yocto-controller/controller.cfg
     sed -i "s/<PASS>/$password/g" ${PWD}/yocto-controller/controller.cfg
-
     echo " ${PWD}/yocto-controller/buildbot.tac "
-    sed -i "s/<USER>/$username/g" ${PWD}/yocto-controller/buildbot.tac
     sed -i "s/<PASS>/$password/g" ${PWD}/yocto-controller/buildbot.tac
-
     echo " ${PWD}/yocto-worker/buildbot.tac "
-    sed -i "s/<USER>/$username/g" ${PWD}/yocto-worker/buildbot.tac
     sed -i "s/<PASS>/$password/g" ${PWD}/yocto-worker/buildbot.tac
+
     echo ""
     echo " Updating worker-init script used for google cloud building. "
     sed -i "s/<HOST_ADDR>/$HOST_ADDR/" ${PWD}/bin/worker-init
@@ -162,6 +155,14 @@ if [ -n "${config_check:+x}" ]; then
     echo " modify the above files as needed. Please see the README for more "
     echo " information. "
     echo ""
+
+
+    upassword=`cat /dev/urandom|tr -dc "a-zA-Z0-9"|fold -w 8|head -n1`
+    upasswdcrypt=`openssl passwd -crypt $upassword`
+    htpath=${PWD}/.htpasswd
+    echo " Generating an .htpasswd file using your current username and $upassword at ${PWD}/.htpasswd"
+    echo "${USER}:${upasswdcrypt}" >> $htpath
+    sed -i "s?<HTPASSWDPATH>?$htpath?g" ${PWD}/yocto-controller/controller.cfg
     echo "#########################################################################"
     echo ""
     echo " Please modify ${PWD}/config/autobuilder.conf if you wish to specify "
@@ -190,5 +191,3 @@ echo ""
 echo " To stop the autobuilder:"
 echo " ./yocto-stop-autobuilder <worker|controller|both>"
 echo ""
-
-
