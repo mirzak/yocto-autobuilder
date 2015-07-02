@@ -19,6 +19,8 @@ import ConfigParser
 import threading
 import time
 
+tmpfile = '/tmp/.buildworker-janitor'+os.getcwd().replace('/', '-')
+
 if len(sys.argv) < 2:
     print("Please specify the path to the config file on the commandline as the first argument")
     sys.exit(1)
@@ -88,34 +90,34 @@ def mirror_processor(mirrordir):
     while True:
         for path in mirrorpaths:
             os.chdir(path)
-            os.system("git fetch --all")
+            os.system("git fetch --prune --all")
         time.sleep(30*60) # 30 minutes
     return
 
 #Check to see if this is running already. If so, kill it and rerun
-if os.path.exists('/tmp/.buildslave-janitor') and os.path.isfile('/tmp/.buildslave-janitor'):
+if os.path.exists(tmpfile) and os.path.isfile(tmpfile):
     print("A prior PID file exists. Attempting to kill.")
-    with open('/tmp/.buildslave-janitor', 'r') as f:
+    with open(tmpfile, 'r') as f:
         pid=f.readline()
     try: 
         os.kill(int(pid), signal.SIGKILL)
         # We need to sleep for a second or two just to give the SIGKILL time
         time.sleep(2)
     except OSError as ex:
-        print("""We weren't able to kill the prior buildslave-janitor. Trying again.""")
+        print("""We weren't able to kill the prior buildworker-janitor. Trying again.""")
         pass
     # Check if the process that we killed is alive.
     try: 
        os.kill(int(pid), 0)
     except OSError as ex:
        pass
-elif os.path.exists('/tmp/.buildslave-janitor') and not os.path.isfile('/tmp/.buildslave-janitor'):
-    raise Exception("""/tmp/.buildslave-janitor is a director. remove it to continue.""")
+elif os.path.exists(tmpfile) and not os.path.isfile(tmpfile):
+    raise Exception("""/tmp/.buildworker-janitor is a director. remove it to continue.""")
 try:
-    os.unlink('/tmp/.buildslave-janitor')
+    os.unlink(tmpfile)
 except:
     pass
-with open('/tmp/.buildslave-janitor', 'w') as f:
+with open(tmpfile, 'w') as f:
     print(os.getpid(), file=f)
 
 threads = []
