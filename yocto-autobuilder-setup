@@ -158,10 +158,9 @@ if [ -n "${config_check:+x}" ]; then
 
 
     upassword=`cat /dev/urandom|tr -dc "a-zA-Z0-9"|fold -w 8|head -n1`
-    upasswdcrypt=`openssl passwd -crypt $upassword`
     htpath=${PWD}/.htpasswd
     echo " Generating an .htpasswd file using your current username and $upassword at ${PWD}/.htpasswd"
-    echo "${USER}:${upasswdcrypt}" >> $htpath
+    ./bin/htpasswd -b $htpath $USER $upassword
     sed -i "s?<HTPASSWDPATH>?$htpath?g" ${PWD}/yocto-controller/controller.cfg
     echo "#########################################################################"
     echo ""
