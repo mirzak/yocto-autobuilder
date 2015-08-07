@@ -48,9 +48,10 @@ if sys.argv[1] == "worker" or sys.argv[1] == "both":
     os.chdir(os.path.join(AB_BASE, "yocto-worker"))
     subprocess.call(["make", "stop"])
     os.chdir(AB_BASE)
-    if os.path.exists('/tmp/.buildworker-janitor') and os.path.isfile('/tmp/.buildworker-janitor'):
+    tmpfile = '/tmp/.buildworker-janitor'+os.getcwd().replace('/', '-')
+    if os.path.exists(tmpfile) and os.path.isfile(tmpfile):
         print("A prior PID file exists. Attempting to kill.")
-        with open('/tmp/.buildworker-janitor', 'r') as f:
+        with open(tmpfile, 'r') as f:
             pid=f.readline()
         try: 
             os.kill(int(pid), signal.SIGKILL)
@@ -66,10 +67,10 @@ if sys.argv[1] == "worker" or sys.argv[1] == "both":
                               HINT:use signal.SIGKILL or signal.SIGABORT""")
         except OSError as ex:
            pass
-    elif os.path.exists('/tmp/.buildworker-janitor') and not os.path.isfile('/tmp/.buildworker-janitor'):
-        raise Exception("""/tmp/.buildworker-janitor is a director. remove it to continue.""")
+    elif os.path.exists(tmpfile) and not os.path.isfile(tmpfile):
+        raise Exception(tmpfile + """ is a directory. Remove it to continue.""")
     try:
-        os.unlink('/tmp/.buildworker-janitor')
+        os.unlink(tmpfile)
     except:
         pass
 
