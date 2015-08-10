@@ -155,12 +155,14 @@ if [ -n "${config_check:+x}" ]; then
     echo " modify the above files as needed. Please see the README for more "
     echo " information. "
     echo ""
-
-
-    upassword=`cat /dev/urandom|tr -dc "a-zA-Z0-9"|fold -w 8|head -n1`
     htpath=${PWD}/.htpasswd
-    echo " Generating an .htpasswd file using your current username and $upassword at ${PWD}/.htpasswd"
-    ./bin/htpasswd -b $htpath $USER $upassword
+
+    if [  ! -f  $htpath ]; then
+        touch $htpath
+        upassword=`cat /dev/urandom|tr -dc "a-zA-Z0-9"|fold -w 8|head -n1`
+        echo " Generating an .htpasswd file using your current username and $upassword at ${PWD}/.htpasswd"
+        ./bin/htpasswd -b $htpath $USER $upassword
+    fi
     sed -i "s?<HTPASSWDPATH>?$htpath?g" ${PWD}/yocto-controller/controller.cfg
     echo "#########################################################################"
     echo ""
