@@ -58,7 +58,7 @@ Files
 -----
 
 There are two needed files in this directory. One file, autobuilder.conf, is a
-global definition file which sets various globals that slaves and master need
+global definition file which sets various globals that controllers and workers need
 to know about. This hasn't really changed from prior versions.
 
 One new file is yoctoAB.conf. This is the only required file needed for build 
@@ -236,7 +236,7 @@ scheduler: A list of dicts. Each item defines a scheduler associated with this
                   git_buildbot.py --repository="file:///where_your_repo_is"
 
            Because of the way builbot change sources work, your change user
-           names must not collide with the user names used by your slaves.
+           names must not collide with the user names used by your workers.
 
            If you are using a GitPoller changesource and you specify a valid
            repository but an non-existent branch, Buildbot will silently ignore
