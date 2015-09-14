@@ -13,7 +13,7 @@ you will need to:
 
 1. Install tight-vnc client and server.
 
-2. Set up tap devs by running poky/scripts/runqemu-setup-tapdev
+2. Set up tap devs by running poky/scripts/runqemu-gen-tapdevs
 
 3. Add "xterm*vt100*geometry: 80x50+10+10" to .Xdefaults
 
