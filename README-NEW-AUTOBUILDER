@@ -249,7 +249,7 @@ scheduler: A list of dicts. Each item defines a scheduler associated with this
            If you are using a SingleBranchScheduler schedule, it is good
            practice to force a build to verify the buildset works correctly.
 
-Example:
+Example of PBChangeSource:
 
 [nightly-x86]
 builders: 'builder1'
@@ -275,6 +275,47 @@ scheduler: [{'dev-branch-scheduler' :
                  'repository':'poky',
                  'stable-timer':30,
                  'change-password':'secret_change_password'}}]
+
+
+Example of MultiBranch GitPoller:
+
+[git-poller]
+builders: 'example-worker'
+repos: [{'poky-contrib':
+            {'repourl':'git://git.yoctoproject.org/poky-contrib',
+             'layerversion':{'core':'meta', 'yoctobsp':'meta-yocto-bsp'},
+             'branch':'tgraydon/poky'}},
+        {'meta-qt3':
+            {'repourl':'git://git.yoctoproject.org/poky-contrib',
+             'branch':'tgraydon/meta-qt3'}}]
+steps: [{'SetDest':{}},
+        {'CheckOutLayers': {}},
+        {'RunPreamble': {}},
+        {'GetDistroVersion' : {'distro': 'poky'}},
+        {'CreateAutoConf': {'machine': 'qemux86', 'SDKMACHINE' : 'i686',
+                            'distro': 'poky'}},
+        {'CreateBBLayersConf': {'buildprovider' : 'yocto'}},
+        {'BuildImages': {'images': 'core-image-sato'}},
+        {'PublishLayerTarballs':{}},
+        {'PublishArtifacts': {'artifacts': ['qemux86', 'atom-pc']}}]
+scheduler: [{'git-poller-scheduler':
+            {'type':'SingleBranchScheduler',
+             'changesource':'GitPoller',
+             'repository':'poky-contrib',
+             'branch':'tgraydon/poky',
+             'interval':3600},
+             'stable-timer':300}}]
+scheduler: [{'git-poller-scheduler':
+            {'type':'SingleBranchScheduler',
+             'changesource':'GitPoller',
+             'repository':'poky-contrib',
+             'branch':'tgraydon/meta-qt3',
+             'interval':3600},
+             'stable-timer':300}}]
+
+Note that the 'change-password' property is not used for GitPoller. This 
+buildset config may also be found in the build-config.examples directory.
+
 
 Adding Buildsteps
 -------------
