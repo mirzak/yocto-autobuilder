@@ -13,7 +13,9 @@ you will need to:
 
 1. Install tight-vnc client and server.
 
-2. Set up tap devs by running poky/scripts/runqemu-gen-tapdevs
+2. Set up tap devs by running poky/scripts/runqemu-gen-tapdevs.
+   You MUST disable interface control on these new tap interfaces;
+   some services include NetworkManager, connman, or wicd.
 
 3. Add "xterm*vt100*geometry: 80x50+10+10" to .Xdefaults
 
