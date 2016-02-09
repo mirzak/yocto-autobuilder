@@ -2,7 +2,7 @@
 builders: 'example-worker'
 repos: [{'poky':
             {'repourl':'git://git.yoctoproject.org/poky',
-             'layerversion':{'core':'meta', 'yocto':'meta-yocto', 'poky':'meta-poky', 'yoctobsp':'meta-yocto-bsp'},
+             'layerversion':{'core':'meta', 'yocto':'meta-yocto', 'yoctobsp':'meta-yocto-bsp'},
              'branch':'dizzy'}},
         {'meta-intel-iot-devkit':
             {'repourl':'git://git.yoctoproject.org/meta-intel-iot-devkit',
