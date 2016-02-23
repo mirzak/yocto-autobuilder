@@ -94,7 +94,7 @@ def fix_tarballs():
         filename = chunks[0]
         basename = split_thing(filename, "-")
         index = len(basename)-1
-        basename[index] = POKY_VER
+        basename[index] = "-".join([BRANCH, POKY_VER])
         new_name = rejoin_thing(basename, "-")
         chunks[0] = new_name
         new_blob = rejoin_thing(chunks, ".")
@@ -511,3 +511,4 @@ if __name__ == '__main__':
         else:
             print "Publishing ADT repo."
             publish_adt(REL_ID, REL_TYPE, "")
+
