@@ -317,6 +317,37 @@ def gen_rel_md5(dirname, md5_file):
     f.close()
     return
 
+def publish_adt(rel_id, rel_type, opts):
+    if opts:
+        ADT_DIR = os.path.join(ADT_BASE, opts)
+    else:
+        if rel_type == "milestone":
+            chunks = split_thing(rel_id, "_")
+            id_thing = float(chunks[0])
+            id_thing = id_thing - 0.1
+            rel_id = str(id_thing) + "+" + "snapshot"
+        ADT_DIR = os.path.join(ADT_BASE, rel_id)
+    print "ADT_DIR: %s" %ADT_DIR
+    if os.path.exists(ADT_DIR):
+        print "ADT_DIR %s EXISTS! Refusing to clobber!" %ADT_DIR
+        sys.exit()
+    else:
+        ADT_ROOTFS = os.path.join(ADT_DIR, "rootfs")
+        ADT_IPK = os.path.join(ADT_DIR, "adt-ipk")
+        QEMU_DIR = os.path.join(MACHINES, "qemu")
+        IPK_DIR = os.path.join(RELEASE_DIR, "ipk")
+        os.mkdir(ADT_DIR)
+        os.mkdir(ADT_ROOTFS)
+        dirlist = get_list(QEMU_DIR)
+
+        for dirname in dirlist:
+            QEMU_SRC = os.path.join(QEMU_DIR, dirname)
+            QEMU_TARGET = os.path.join(ADT_ROOTFS, dirname)
+            print "QEMU_SRC: %s" %QEMU_SRC
+            sync_it(QEMU_SRC, QEMU_TARGET, "")
+        
+        sync_it(IPK_DIR, ADT_IPK, "")
+    return
 
 if __name__ == '__main__':
     
@@ -326,6 +357,7 @@ if __name__ == '__main__':
     VHOSTS = "/srv/www/vhosts"
     AB_BASE = os.path.join(VHOSTS, "autobuilder.yoctoproject.org/pub/releases")
     DL_BASE = os.path.join(VHOSTS, "downloads.yoctoproject.org/releases")
+    ADT_BASE = os.path.join(VHOSTS, "adtrepo.yoctoproject.org")
 
     # List of the directories we delete from all releases
     UNLOVED = ['rpm', 'deb', 'ptest', 'adt-installer-QA']
@@ -346,7 +378,12 @@ if __name__ == '__main__':
     parser.add_option("-p", "--poky-ver",
                       type="string", dest="poky",
                       help="Required for Major and Point releases. i.e. 14.0.0")
-                     
+    parser.add_option("-a", action="store_true", dest="pub_adt",
+                      help="Publish an ADT repo for the release. Default is NOT to publish.")
+    parser.add_option("-d", "--adt-dir",
+                      type="string", dest="adt_dir",
+                      help="Use when you need to publish the ADT repo to a custom location. i.e. python adtcopy -b yocto-2.0_M1.rc1 -a 1.8+snaphot")
+
     (options, args) = parser.parse_args()
  
     REL_TYPE = ""
@@ -395,12 +432,12 @@ if __name__ == '__main__':
         print "Build ID is a required argument."
         print "Please use -h or --help for options."
         sys.exit()
-
+   
     if not (RELEASE and RC and REL_ID and REL_TYPE):
         print "Can't determine the release type. Check your args."
         print "You gave me: %s" %options.build
         sys.exit()
-
+    
     print "RC_DIR: %s" %RC_DIR
     print "RELEASE: %s" %RELEASE
     print "RC: %s" %RC
@@ -420,7 +457,7 @@ if __name__ == '__main__':
     ECLIPSE_DIR = os.path.join(RELEASE_DIR, "eclipse-plugin")
     BUILD_APP_DIR = os.path.join(RELEASE_DIR, "build-appliance")
     REL_MD5_FILE = RELEASE + ".md5sum"
-       
+
     # For all releases:
     # 1) Rsync the rc candidate to a staging dir where all work happens
     sync_it(RC_SOURCE, RELEASE_DIR, UNLOVED)
@@ -461,3 +498,16 @@ if __name__ == '__main__':
     print "Publishing release to downloads."
     sync_it(RELEASE_DIR, DL_DIR, "")
 
+    # 9) Publish the ADT repo. The default is NOT to publish the ADT. The ADT 
+    # is deprecated as of 2.1_M1. However, we need to retain backward 
+    # compatability for point releases, etc. We do this step after all the other
+    #  stuff because we want the symlinks to have been converted, extraneous 
+    # files deleted, and md5sums generated.
+    #
+    if options.pub_adt:
+        if options.adt_dir:
+            print "Publishing the ADT repo using custom dir %s" %options.adt_dir
+            publish_adt(REL_ID, REL_TYPE, options.adt_dir)
+        else:
+            print "Publishing ADT repo."
+            publish_adt(REL_ID, REL_TYPE, "")
