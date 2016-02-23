@@ -200,21 +200,23 @@ def make_bsps(bsp_list, bsp_dir):
                 print "Creating %s bsp dir" %dirname
                 os.mkdir(dirname)
             target = os.path.join(dirname, POKY_TARBALL)
-            copyfile(poky_blob, target)
-            os.chdir(dirname)
-            print "Unpacking poky tarball."
-            os.system("tar jxf %s" %POKY_TARBALL)
             oldblob = POKY_TARBALL
             chunks = split_thing(oldblob, "-")
             chunks[0] = dirname
             new_blob = rejoin_thing(chunks, "-")
+            print "BSP tarball: %s" %new_blob
             new_dir = split_thing(blob_dir, "-")
             new_dir[0] = dirname
             new_dir = rejoin_thing(new_dir, "-")
             bin_dir = os.path.join(new_dir, "binary")
+            copyfile(poky_blob, target)
+            os.chdir(dirname)
+            print "Unpacking poky tarball."
+            os.system("tar jxf %s" %POKY_TARBALL)
             shutil.move(blob_dir, new_dir)
             os.remove(POKY_TARBALL)
-            os.mkdir(bin_dir)
+            if not os.path.exists(bin_dir):
+                os.mkdir(bin_dir)
             print "Getting binary files"
             os.system("rsync -arl %s/%s/ %s" %(MACHINES, dirname, bin_dir))
             bsp_bin = os.path.join(bsp_dir, dirname, bin_dir)
@@ -224,8 +226,10 @@ def make_bsps(bsp_list, bsp_dir):
             print "Creating BSP tarball"
             os.system("tar jcf %s %s" %(new_blob, new_dir))
             rmtree(new_dir)
-            print "Copying %s BSP tarball to machines dir" %new_blob
-            shutil.copy(new_blob, platform_dir)
+            print "Generating the md5sum."
+            os.system("md5sum %s > %s.md5sum" %(new_blob, new_blob))
+            print "Copying %s BSP to platform dir" %dirname
+            os.system("mv * %s" %platform_dir)
             os.chdir(bsp_dir)
         print
     os.chdir(RELEASE_DIR)
@@ -356,7 +360,7 @@ if __name__ == '__main__':
    
     VHOSTS = "/srv/www/vhosts"
     AB_BASE = os.path.join(VHOSTS, "autobuilder.yoctoproject.org/pub/releases")
-    DL_BASE = os.path.join(VHOSTS, "downloads.yoctoproject.org/releases")
+    DL_BASE = os.path.join(VHOSTS, "downloads.yoctoproject.org/releases/yocto")
     ADT_BASE = os.path.join(VHOSTS, "adtrepo.yoctoproject.org")
 
     # List of the directories we delete from all releases
@@ -453,7 +457,7 @@ if __name__ == '__main__':
     MACHINES = os.path.join(RELEASE_DIR, "machines")
     BSP_DIR = os.path.join(RELEASE_DIR, 'bsptarballs')
     TARBALL_DIR = os.path.join(RELEASE_DIR, "tarballs")
-    POKY_TARBALL = "poky-" + POKY_VER + ".tar.bz2"
+    POKY_TARBALL = "poky-" + BRANCH + "-" + POKY_VER + ".tar.bz2"
     ECLIPSE_DIR = os.path.join(RELEASE_DIR, "eclipse-plugin")
     BUILD_APP_DIR = os.path.join(RELEASE_DIR, "build-appliance")
     REL_MD5_FILE = RELEASE + ".md5sum"
@@ -511,4 +515,3 @@ if __name__ == '__main__':
         else:
             print "Publishing ADT repo."
             publish_adt(REL_ID, REL_TYPE, "")
-
