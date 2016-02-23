@@ -360,19 +360,23 @@ if __name__ == '__main__':
     else:
         BRANCH = ""
 
-
     if options.build:
         # Figure out the release name, type of release, and generate some vars, do some basic validation
-        chunks = split_thing(options.build, ".")
+        options.build = options.build.lower()
+        RC = split_thing(options.build, ".")[-1]
+        chunks = split_thing(options.build, ".") # i.e. split yocto-2.1_m1.rc1
         chunks.pop()
-        RELEASE = rejoin_thing(chunks, ".")
-        rel_thing = split_thing(options.build, "-")
-        RC = split_thing(options.build, ".")[-1].lower()
-        RC_DIR = RELEASE + "." + RC
-        REL_ID = split_thing(RELEASE, "-")[-1]
-        milestone = split_thing(REL_ID, "_")
-        if len(milestone) == 1:
-            thing = split_thing(milestone[0], ".")
+        chunks[1] = chunks[1].upper()
+        RELEASE = rejoin_thing(chunks, ".")  # i.e. yocto-2.1_m1
+        REL_ID = split_thing(RELEASE, "-")[-1].upper()
+        RC_DIR = rejoin_thing([RELEASE, RC], ".")
+        RC_SOURCE = os.path.join(AB_BASE, RC_DIR)
+        if not os.path.exists(RC_SOURCE):
+            print "%s does not appear to be a valid RC dir. Check your args." %RC_SOURCE
+            sys.exit()
+        relstring = split_thing(REL_ID, "_")
+        if len(relstring) == 1:
+            thing = split_thing(relstring[0], ".")
             if len(thing) == 3:
                 REL_TYPE = "point"
             elif len(thing) == 2:
@@ -385,14 +389,27 @@ if __name__ == '__main__':
                 print "Please use -h or --help for options."
                 sys.exit()
         else:
-            MILESTONE = milestone.pop()
+            MILESTONE = relstring.pop()
             REL_TYPE = "milestone"
     else:
         print "Build ID is a required argument."
         print "Please use -h or --help for options."
         sys.exit()
-    
-    RC_SOURCE = os.path.join(AB_BASE, RC_DIR)
+
+    if not (RELEASE and RC and REL_ID and REL_TYPE):
+        print "Can't determine the release type. Check your args."
+        print "You gave me: %s" %options.build
+        sys.exit()
+
+    print "RC_DIR: %s" %RC_DIR
+    print "RELEASE: %s" %RELEASE
+    print "RC: %s" %RC
+    print "REL_ID: %s" %REL_ID
+    print "REL_TYPE: %s" %REL_TYPE
+    if MILESTONE:
+        print "MILESTONE: %s" %MILESTONE
+    print
+
     PLUGIN_DIR = os.path.join(DL_BASE, "eclipse-plugin", REL_ID)
     RELEASE_DIR = os.path.join(AB_BASE, RELEASE)
     DL_DIR = os.path.join(DL_BASE, RELEASE)
@@ -403,36 +420,44 @@ if __name__ == '__main__':
     ECLIPSE_DIR = os.path.join(RELEASE_DIR, "eclipse-plugin")
     BUILD_APP_DIR = os.path.join(RELEASE_DIR, "build-appliance")
     REL_MD5_FILE = RELEASE + ".md5sum"
- 
+       
     # For all releases:
     # 1) Rsync the rc candidate to a staging dir where all work happens
     sync_it(RC_SOURCE, RELEASE_DIR, UNLOVED)
     
     # 2) Convert the symlinks in build-appliance dir.
+    print "Converting the build-appliance symlink."
     convert_symlinks(BUILD_APP_DIR)
 
     # 3) In machines dir, convert the symlinks, delete the cruft
+    print "Cleaning up the machines dirs, converting symlinks."
     dirlist = get_list(MACHINES)
     for dirname in dirlist:
         dirname = os.path.join(MACHINES, dirname)
         convert_symlinks(dirname)
         nuke_cruft(dirname, CRUFT_LIST)
+    print "Generating fresh md5sums."
     gen_md5sum(MACHINES)
     
     # For major and point releases
     if REL_TYPE == "major" or REL_TYPE == "point":
         # 4) Fix up the eclipse and poky tarballs
+        print "Cleaning up the eclipse, poky and other tarballs."
         fix_tarballs()
 
         # 5) Publish the eclipse stuff
+        print "Publishing the eclipse plugins."
         pub_eclipse(ECLIPSE_DIR, PLUGIN_DIR)
 
         # 6) Make the bsps
+        print "Generating the BSP tarballs."
         make_bsps(BSP_LIST, BSP_DIR)
 
     # 7) Generate the master md5sum file for the release (for all releases)
+    print "Generating the master md5sum table."
     gen_rel_md5(RELEASE_DIR, REL_MD5_FILE)
     
     # 8) sync to downloads
+    print "Publishing release to downloads."
     sync_it(RELEASE_DIR, DL_DIR, "")
 
