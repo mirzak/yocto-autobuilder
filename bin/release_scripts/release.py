@@ -20,33 +20,6 @@ import shutil
 from shutil import rmtree, copyfile
 from subprocess import call
 
-def print_vars():
-    print "RELEASE: %s" %RELEASE
-    print "REL_TYPE: %s" %REL_TYPE
-    print "RC_DIR: %s" %RC_DIR
-    print "REL_ID: %s" %REL_ID
-    print "RC: %s" %RC
-    if MILESTONE != "":
-        print "Milestone: %s" %MILESTONE
-    if POKY_VER != "":
-        print "POKY_VER: %s" %POKY_VER
-    else:
-       print "POKY_VER: undefined!"
-    if BRANCH:
-        print "BRANCH: %s" %BRANCH
-    else:
-        print "BRANCH: undefined!"
-
-    print "DL_BASE: %s" %DL_BASE
-    if RC_SOURCE != "":
-        print "RC_SOURCE: %s" %RC_SOURCE
-    print "RELEASE_DIR: %s" %RELEASE_DIR
-    print "ECLIPSE_DIR: %s" %ECLIPSE_DIR
-    print "PLUGIN_DIR: %s" %PLUGIN_DIR
-    print "DL_DIR: %s" %DL_DIR
-    print
-    return
-
 def sanity_check(source, target):
     if not os.path.exists(source):
        print
@@ -63,7 +36,6 @@ def sanity_check(source, target):
        print
        sys.exit()
     return
-
 
 def sync_it(source, target, exclude_list):
     print "Syncing %s to %s" %(source, target)
@@ -112,7 +84,6 @@ def fix_tarballs():
     print "Repackaging poky and eclipse tarballs...."
     os.chdir(RELEASE_DIR)
     os.mkdir(TARBALL_DIR)
-    #os.mkdir("%s" %TARBALL_DIR)
     os.system("mv %s/*.tar.bz2 %s" %(RELEASE_DIR, TARBALL_DIR))
     os.system("rm *.md5sum")
     os.chdir(TARBALL_DIR)
@@ -352,12 +323,6 @@ if __name__ == '__main__':
     os.system("clear")
     print
    
-    # This is for testing convenience
-    #HOME_BASE = "/home/tgraydon/work/release"
-    #AB_BASE = HOME_BASE
-    #DL_BASE = os.path.join(HOME_BASE, "downloads")
-
-    # This is the legit set of vars used for production release
     VHOSTS = "/srv/www/vhosts"
     AB_BASE = os.path.join(VHOSTS, "autobuilder.yoctoproject.org/pub/releases")
     DL_BASE = os.path.join(VHOSTS, "downloads.yoctoproject.org/releases")
@@ -439,8 +404,6 @@ if __name__ == '__main__':
     BUILD_APP_DIR = os.path.join(RELEASE_DIR, "build-appliance")
     REL_MD5_FILE = RELEASE + ".md5sum"
  
-    print_vars()
-
     # For all releases:
     # 1) Rsync the rc candidate to a staging dir where all work happens
     sync_it(RC_SOURCE, RELEASE_DIR, UNLOVED)
