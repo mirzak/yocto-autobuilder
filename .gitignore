@@ -18,7 +18,7 @@ config/autobuilder.conf
 *.hostname
 .setupdone
 .cfg
-
+*~
 TODO
 yocto-controller/http.log
 yocto-controller/controller.cfg
