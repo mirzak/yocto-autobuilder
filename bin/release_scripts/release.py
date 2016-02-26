@@ -453,7 +453,6 @@ if __name__ == '__main__':
 
     PLUGIN_DIR = os.path.join(DL_BASE, "eclipse-plugin", REL_ID)
     RELEASE_DIR = os.path.join(AB_BASE, RELEASE)
-    DL_DIR = os.path.join(DL_BASE, RELEASE)
     MACHINES = os.path.join(RELEASE_DIR, "machines")
     BSP_DIR = os.path.join(RELEASE_DIR, 'bsptarballs')
     TARBALL_DIR = os.path.join(RELEASE_DIR, "tarballs")
@@ -494,18 +493,24 @@ if __name__ == '__main__':
         print "Generating the BSP tarballs."
         make_bsps(BSP_LIST, BSP_DIR)
 
-    # 7) Generate the master md5sum file for the release (for all releases)
-    print "Generating the master md5sum table."
-    gen_rel_md5(RELEASE_DIR, REL_MD5_FILE)
+        # 7) Generate the master md5sum file for the release (for all releases)
+        print "Generating the master md5sum table."
+        gen_rel_md5(RELEASE_DIR, REL_MD5_FILE)
     
     # 8) sync to downloads
+    if REL_TYPE == "milestone":
+        DL_DIR = os.path.join(DL_BASE, "milestones", RELEASE)
+        print "DL_DIR for milestones: %s" %DL_DIR
+    else:
+        DL_DIR = os.path.join(DL_BASE, RELEASE)
+        print "DL_DIR for point/major: %s" %DL_DIR
     print "Publishing release to downloads."
     sync_it(RELEASE_DIR, DL_DIR, "")
 
-    # 9) Publish the ADT repo. The default is NOT to publish the ADT. The ADT 
-    # is deprecated as of 2.1_M1. However, we need to retain backward 
+    # 9) Publish the ADT repo. The default is NOT to publish the ADT. The ADT
+    # is deprecated as of 2.1_M1. However, we need to retain backward
     # compatability for point releases, etc. We do this step after all the other
-    #  stuff because we want the symlinks to have been converted, extraneous 
+    #  stuff because we want the symlinks to have been converted, extraneous
     # files deleted, and md5sums generated.
     #
     if options.pub_adt:
