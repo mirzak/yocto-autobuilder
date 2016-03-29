@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+#
+# Autobuilder PR Service Startup Script
+# Elizabeth Flanagan <elizabeth.flanagan@intel.com>
+#
+##
+# Copyright (C) 2011-2016 Intel Corp.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+import os, sys, optparse, subprocess, datetime
+from socket import gethostname
+from ConfigParser import SafeConfigParser
+
+usage  = """%prog [options] start|stop
+
+Start/stop the autobuilder PR server instance.
+"""
+prserv_file = "prserv_export"
+parser = optparse.OptionParser(usage=usage)
+options, args = parser.parse_args( sys.argv )
+
+if len(args) != 2 or (sys.argv[1] != "start" and sys.argv[1] != "stop") :
+    parser.error("""
+    You must specify if you wish to stop or start. 
+   
+    """ + usage )
+AB_BASE=os.path.dirname(os.path.abspath(sys.argv[0]))
+
+parser = SafeConfigParser()
+parser.read('config/autobuilder.conf')
+print
+print "Reading " + os.path.join(AB_BASE, "config/autobuilder.conf")
+print 
+os.environ["WORKERBASEDIR"] = AB_BASE.strip('"') + "/yocto-worker"
+print ' Setting %s to %s' % ("WORKERBASEDIR", AB_BASE + "/yocto-worker")
+
+for section_name in parser.sections():
+    for name, value in parser.items(section_name):
+        if "PRSERV" in name.upper():
+            locals()[name.upper()]=value
+            print " Setting %s to %s" % (name.upper(), value)
+
+if PRSERV_HOST and PRSERV_PORT:
+    if os.path.isdir(os.path.join(AB_BASE, "bitbake/.git")):
+        print " Updating PRSERV "
+        os.chdir(os.path.join(AB_BASE, "bitbake"))
+        subprocess.call(["git", "pull"])
+        os.chdir(AB_BASE)
+    else:
+        print " Cloning PRSERV "
+        os.chdir(AB_BASE)
+        subprocess.call(["git", "clone", "git://git.openembedded.org/bitbake"])
+
+        sys.path.insert(0, os.path.join(AB_BASE, "bitbake/lib"))
+
+    if sys.argv[1] == "start":
+        if PRSERV_PORT == "0":
+            subprocess.call(["./bitbake/bin/bitbake-prserv", "--start", "--host", PRSERV_HOST, "--port", PRSERV_PORT])
+        else:
+            subprocess.call(["./bitbake/bin/bitbake-prserv", "--start"])
+
+    if sys.argv[1] == "stop":
+        subprocess.call(["./bitbake/bin/bitbake-prserv", "--stop"])
+else:
+    print "PRSERV_HOST and PRSERV_PORT must exist in config/autobuilder.conf"
+    sys.exit(1)

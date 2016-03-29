@@ -47,7 +47,7 @@ AB_BASE=os.path.dirname(os.path.abspath(sys.argv[0]))
 if os.path.isfile(os.path.join(AB_BASE, ".setupdone")):
     
     from ConfigParser import SafeConfigParser
- 
+
     parser = SafeConfigParser()
     parser.read('config/autobuilder.conf')
     print
@@ -65,10 +65,15 @@ if os.path.isfile(os.path.join(AB_BASE, ".setupdone")):
                         os.mkdirs(value)
                         print ' Creating %s at %s' % (name.upper(), value)
                     except:
-                        pass            
+                        pass
     print
 
     if sys.argv[1] == "controller" or sys.argv[1] == "both":
+        if os.environ["PRSERV_HOST"] and os.environ["PRSERV_HOST"] == "localhost":
+            os.chdir(AB_BASE)
+            subprocess.call([os.path.join(AB_BASE, "ab-prserv"), "start"])
+
+
         os.chdir(os.path.join(AB_BASE, "yocto-controller"))
         subprocess.call(["make", "start"])
         os.chdir(AB_BASE)

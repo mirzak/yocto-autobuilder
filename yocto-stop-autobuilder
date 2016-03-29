@@ -22,6 +22,7 @@
 
 import os, sys, optparse, subprocess, signal, time
 from socket import gethostname
+from ConfigParser import SafeConfigParser
 
 usage  = """%prog [options] controller|worker|both   
 
@@ -39,7 +40,19 @@ if len(args) != 2 or (sys.argv[1] != "both" and sys.argv[1] != "controller" and 
 
 AB_BASE=os.path.dirname(os.path.abspath(sys.argv[0]))
 
+parser = SafeConfigParser()
+parser.read('config/autobuilder.conf')
+os.environ["WORKERBASEDIR"] = AB_BASE.strip('"') + "/yocto-worker"
+print ' Setting %s to %s' % ("WORKERBASEDIR", AB_BASE + "/yocto-worker")
+for section_name in parser.sections():
+    for name, value in parser.items(section_name):
+        os.environ[name.upper()] = value.strip('"').strip("'")
+
 if sys.argv[1] == "controller" or sys.argv[1] == "both":
+    if os.environ["PRSERV_HOST"] and os.environ["PRSERV_HOST"] == "localhost":
+        os.chdir(AB_BASE)
+        subprocess.call([os.path.join(AB_BASE, "ab-prserv"), "stop"])
+
     os.chdir(os.path.join(AB_BASE, "yocto-controller"))
     subprocess.call(["make", "stop"])
     os.chdir(AB_BASE)

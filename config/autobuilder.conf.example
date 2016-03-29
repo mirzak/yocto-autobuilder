@@ -12,6 +12,8 @@ BUILD_HISTORY_REPO = "file:////tmp/yocto-autobuilder/buildhistory-repo"
 BUILD_HISTORY_WHITELIST = "{'git://git.yoctoproject.org/poky':['master']}"
 BUILD_HISTORY_WEB = False
 BUILD_HISTORY_WEB_DIR = "/tmp/buildhistory-web"
+PRSERV_HOST = "localhost"
+PRSERV_PORT = "0"
 
 [ErrorReportSettings]
 ERROR_REPORT_COLLECT = True
