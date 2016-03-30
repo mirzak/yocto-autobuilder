@@ -69,16 +69,14 @@ if os.path.isfile(os.path.join(AB_BASE, ".setupdone")):
     print
 
     if sys.argv[1] == "controller" or sys.argv[1] == "both":
-        if os.environ["PRSERV_HOST"] and os.environ["PRSERV_HOST"] == "localhost":
-            os.chdir(AB_BASE)
-            subprocess.call([os.path.join(AB_BASE, "ab-prserv"), "start"])
-
-
         os.chdir(os.path.join(AB_BASE, "yocto-controller"))
         subprocess.call(["make", "start"])
         os.chdir(AB_BASE)
 
     if sys.argv[1] == "worker" or sys.argv[1] == "both":
+        if os.environ["PRSERV_HOST"] and os.environ["PRSERV_HOST"] == "localhost":
+            os.chdir(AB_BASE)
+            subprocess.call([os.path.join(AB_BASE, "ab-prserv"), "start"])
         os.chdir(os.path.join(AB_BASE, "yocto-worker"))
         subprocess.call(["make", "start"])
         os.chdir(AB_BASE)
