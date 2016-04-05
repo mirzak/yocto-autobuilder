@@ -94,17 +94,17 @@ def rejoin_thing(thing, marker):
 
 
 if __name__ == '__main__':
-    
+
     os.system("clear")
     print
-    
+
     parser = optparse.OptionParser()
     parser.add_option("-i", "--build-id", type="string", dest="build", help="build id of release including rc#. i.e. yocto-2.0.rc1, yocto-2.1_M1.rc3, etc.")
     parser.add_option("-b", "--branch", type="string", dest="branch", help="branch for the release. i.e. daisy, fido, jethro, etc.")
     parser.add_option("-p", "--poky-ver", type="string", dest="poky", help="poky version for the release. i.e. 14.0.0")
 
     (options, args) = parser.parse_args()
- 
+
     REL_TYPE = ""
     MILESTONE = ""
     POKY_VER = ""
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     else:
         print "Please use -h or --help for options."
         sys.exit()
-    
+
     # This is for testing convenience
     HOME_BASE = "/home/tgraydon/work/release"
     AB_BASE = HOME_BASE

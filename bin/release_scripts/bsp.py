@@ -254,10 +254,10 @@ def release_type(build_id):
     return var_dict
 
 if __name__ == '__main__':
-    
+
     os.system("clear")
     print
-   
+
     VHOSTS = "/srv/www/vhosts"
     AB_BASE = os.path.join(VHOSTS, "autobuilder.yoctoproject.org/pub/releases")
     DL_BASE = os.path.join(VHOSTS, "downloads.yoctoproject.org/releases/yocto")
@@ -282,7 +282,7 @@ if __name__ == '__main__':
                       help="Required for Major and Point releases. i.e. 14.0.0")
 
     (options, args) = parser.parse_args()
- 
+
     if not (options.build and options.poky and options.branch):
         print "You need to specify the RC candidate, the poky version and the branch."
         print "Please use -h or --help for options."

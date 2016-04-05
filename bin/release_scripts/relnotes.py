@@ -58,16 +58,16 @@ def release_type(build_id):
         print "Can't determine the release type. Check your args."
         print "You gave me: %s" %options.build
         sys.exit()
-    
+
     var_dict = {'RC': RC, 'RELEASE': RELEASE, 'REL_ID': REL_ID, 'RC_DIR': RC_DIR, 'REL_TYPE': REL_TYPE};
     return var_dict
 
 
 if __name__ == '__main__':
-    
+
     os.system("clear")
     print
-   
+
     VHOSTS = "/srv/www/vhosts"
     AB_BASE = os.path.join(VHOSTS, "autobuilder.yoctoproject.org/pub/releases")
     DL_BASE = os.path.join(VHOSTS, "downloads.yoctoproject.org/releases/yocto")
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                       help="Required. Specify the revision range to use for the git log. i.e. yocto-2.0.1 would use yocto-2.0..HEAD. ")
 
     (options, args) = parser.parse_args()
- 
+
     if not (options.build and options.branch and options.poky and options.revs):
         print "You must specify the RC, branch, poky version, and revision range."
         print "Please use -h or --help for options."
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     print "POKY_VER: %s" %POKY_VER
     print "RELEASE_NOTES: %s" %RELEASE_NOTES
     #print "AB_BASE: %s" %AB_BASE
-    
+
     outpath = os.path.join(HOME, RELEASE_NOTES)
     outfile = open(outpath, 'w')
     outfile.write("\n------------------\n%s Errata\n--------------------\n\n" %RELEASE)

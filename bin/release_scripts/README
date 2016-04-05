@@ -1,36 +1,36 @@
-The release.py script is intended to help more efficiently and consistently 
+The release.py script is intended to help more efficiently and consistently
 publish releases. The script works for Major, Point, and Milestone releases.
 
-To invoke the script, run "python release.py <options>. Available options are:  
+To invoke the script, run "python release.py <options>. Available options are:
 
 
-    -i, --build-id    Required for all release types. Build id of release 
+    -i, --build-id    Required for all release types. Build id of release
                       including rc#. i.e. yocto-2.0.rc1, yocto-2.1_M1.rc3, etc.
     -b, --branch      Required for Major and Point releases. i.e. daisy, fido, jethro, etc.
     -p, --poky-ver    Required for Major and Point releases. Not used for Milestones. i.e. 14.0.0
 
-Example: 
+Example:
 
-$ python release.py -i yocto-2.0.rc3 -b jethro -p 14.0.0 
+$ python release.py -i yocto-2.0.rc3 -b jethro -p 14.0.0
 
-The script will take the release candidate name and determine the source and 
-target directories, as well as the type of release, etc., to prepare for staging 
-the release. 
+The script will take the release candidate name and determine the source and
+target directories, as well as the type of release, etc., to prepare for staging
+the release.
 
 The script will then do the following:
 
 1) Rsync the rc candidate to a staging dir where all work happens
 2) Convert the symlink in build-appliance dir.
-3) In machines dir, convert the symlinks, delete the files we do not want to 
+3) In machines dir, convert the symlinks, delete the files we do not want to
    publish, and generate fresh md5sums after link conversion.
-4) For major and point releases, repackage the poky and eclipse tarballs using 
+4) For major and point releases, repackage the poky and eclipse tarballs using
    branch and poky version.
 5) For major and point releases, publish the eclipse plugins.
-6) For major and point releases, create the BSP tarballs. 
+6) For major and point releases, create the BSP tarballs.
 7) For major and point releases, generate the master md5sum file for the release.
 8) Sync the staging directory to downloads directory.
 
-Currently, the ADT release sync and the release notes must still be done manually 
+Currently, the ADT release sync and the release notes must still be done manually
 and copied over to the release download directories accordingly. Future enhancements
 will address these two release steps.
 

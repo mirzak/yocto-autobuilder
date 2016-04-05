@@ -36,10 +36,10 @@ def rejoin_thing(thing, marker):
     return filebits
 
 if __name__ == '__main__':
-    
+
     os.system("clear")
     print
-    
+
     # This is for testing convenience
     HOME_BASE = "/home/tgraydon/work/release"
     AB_BASE = HOME_BASE
@@ -61,9 +61,9 @@ if __name__ == '__main__':
     parser.add_option("-d", "--dirname",
                       type="string", dest="dirname",
                       help="Required. Name of the staging dir you want to clean up. i.e. yocto-2.0, yocto-2.1_M1, etc.")
-                     
+
     (options, args) = parser.parse_args()
- 
+
     if options.dirname:
         # Figure out the release name, type of release, and generate some vars, do some basic validation
         if options.dirname.find("rc") == -1 and options.dirname.find("RC") == -1:
@@ -76,7 +76,7 @@ if __name__ == '__main__':
         print "Huh? Check your args."
         print "Please use -h or --help for options."
         sys.exit()
-    
+
     print_vars()
     if os.path.exists(RELEASE_DIR):
         purge_unloved()

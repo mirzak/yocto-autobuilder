@@ -99,7 +99,7 @@ if os.path.exists(tmpfile) and os.path.isfile(tmpfile):
     print("A prior PID file exists. Attempting to kill.")
     with open(tmpfile, 'r') as f:
         pid=f.readline()
-    try: 
+    try:
         os.kill(int(pid), signal.SIGKILL)
         # We need to sleep for a second or two just to give the SIGKILL time
         time.sleep(2)
@@ -107,7 +107,7 @@ if os.path.exists(tmpfile) and os.path.isfile(tmpfile):
         print("""We weren't able to kill the prior buildworker-janitor. Trying again.""")
         pass
     # Check if the process that we killed is alive.
-    try: 
+    try:
        os.kill(int(pid), 0)
     except OSError as ex:
        pass

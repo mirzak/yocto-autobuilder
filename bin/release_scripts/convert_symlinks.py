@@ -87,7 +87,7 @@ def nuke_cruft(dirname, ext_list):
 
 
 if __name__ == '__main__':
-    
+
     os.system("clear")
     print
 
@@ -99,14 +99,14 @@ if __name__ == '__main__':
     #VHOSTS = "/srv/www/vhosts"
     #AB_BASE = os.path.join(VHOSTS, "autobuilder.yoctoproject.org/pub/releases")
 
- 
+
     parser = optparse.OptionParser()
     parser.add_option("-d", "--dirname",
                       type="string", dest="dirname",
                       help="Required. Name of the staging dir. i.e. yocto-2.0, yocto-2.1_M1, etc.")
-                     
+
     (options, args) = parser.parse_args()
- 
+
     if options.dirname:
         if options.dirname.find("rc") == -1 and options.dirname.find("RC") == -1:
             print options.dirname
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         print "Huh? Check your args."
         print "Please use -h or --help for options."
         sys.exit()
-         
+
     if os.path.exists(MACHINES):
         dirlist = get_list(MACHINES)
         for dirname in dirlist:
