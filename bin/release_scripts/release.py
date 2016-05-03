@@ -244,18 +244,9 @@ def nuke_cruft(dirname, ext_list):
             qemu_dir = os.path.join(MACHINES, dirname, dir)
             nuke_cruft(qemu_dir, CRUFT_LIST)
     else:
-        foo = dirname.find("p1022")
-        if foo == -1:
-            # NOT P1022ds
-            for ext in ext_list:
-                print "Deleting %s files" %ext
-                os.system("rm -f %s/%s" %(dirname, ext))
-        else:
-            # IS P1022ds
-            for ext in ext_list:
-                if ext != "*.tar.gz":
-                    print "Deleting %s files" %ext
-                    os.system("rm -f %s/%s" %(dirname, ext))
+        for ext in ext_list:
+            print "Deleting %s files" %ext
+            os.system("rm -f %s/%s" %(dirname, ext))
     print
     return
 
@@ -368,7 +359,7 @@ if __name__ == '__main__':
     # List of the files in machines directories that we delete from all releases
     CRUFT_LIST = ['*.md5sum', '*.tar.gz', '*.iso']
     # List of the platforms for which we want to generate BSP tarballs. Major and point releases.
-    BSP_LIST = ['beaglebone', 'edgerouter', 'genericx86', 'genericx86-64', 'mpc8315e-rdb', 'p1022ds']
+    BSP_LIST = ['beaglebone', 'edgerouter', 'genericx86', 'genericx86-64']
     # List of files we do not want to include in the BSP tarballs.
     BSP_JUNK = ['*.manifest', '*.tar.bz2', '*.tgz', '*.iso', '*.md5sum', '*.tar.gz', '*-dev-*', '*-sdk-*']
 
