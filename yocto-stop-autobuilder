@@ -48,10 +48,40 @@ for section_name in parser.sections():
     for name, value in parser.items(section_name):
         os.environ[name.upper()] = value.strip('"').strip("'")
 
+
+def killpid(pidfile):
+    if os.path.exists(pidfile) and os.path.isfile(pidfile):
+        print("A prior PID file exists. Attempting to kill.")
+        with open(pidfile, 'r') as f:
+            pid=f.readline()
+        try: 
+            os.kill(int(pid), signal.SIGKILL)
+            # We need to sleep for a second or two just to give the SIGKILL time
+            time.sleep(2)
+        except OSError as ex:
+            print("""We weren't able to kill the owner of %s, trying again.""" % pidfile)
+            pass
+        # Check if the process that we killed is alive.
+        try: 
+           os.kill(int(pid), 0)
+           raise Exception("""wasn't able to kill the process 
+                              HINT:use signal.SIGKILL or signal.SIGABORT""")
+        except OSError as ex:
+           pass
+    elif os.path.exists(pidfile) and not os.path.isfile(pidfile):
+        raise Exception(pidfile + """ is a directory. Remove it to continue.""")
+    try:
+        os.unlink(pidfile)
+    except:
+        pass
+
 if sys.argv[1] == "controller" or sys.argv[1] == "both":
     os.chdir(os.path.join(AB_BASE, "yocto-controller"))
     subprocess.call(["make", "stop"])
     os.chdir(AB_BASE)
+    tmpfile = '/tmp/.buildlogger.pid'
+    killpid(tmpfile)
+
 
 if sys.argv[1] == "worker" or sys.argv[1] == "both":
     if os.environ["PRSERV_HOST"] and os.environ["PRSERV_HOST"] == "localhost":
@@ -62,28 +92,5 @@ if sys.argv[1] == "worker" or sys.argv[1] == "both":
     subprocess.call(["make", "stop"])
     os.chdir(AB_BASE)
     tmpfile = '/tmp/.buildworker-janitor'+os.getcwd().replace('/', '-')
-    if os.path.exists(tmpfile) and os.path.isfile(tmpfile):
-        print("A prior PID file exists. Attempting to kill.")
-        with open(tmpfile, 'r') as f:
-            pid=f.readline()
-        try: 
-            os.kill(int(pid), signal.SIGKILL)
-            # We need to sleep for a second or two just to give the SIGKILL time
-            time.sleep(2)
-        except OSError as ex:
-            print("""We weren't able to kill the prior buildworker-janitor. Trying again.""")
-            pass
-        # Check if the process that we killed is alive.
-        try: 
-           os.kill(int(pid), 0)
-           raise Exception("""wasn't able to kill the process 
-                              HINT:use signal.SIGKILL or signal.SIGABORT""")
-        except OSError as ex:
-           pass
-    elif os.path.exists(tmpfile) and not os.path.isfile(tmpfile):
-        raise Exception(tmpfile + """ is a directory. Remove it to continue.""")
-    try:
-        os.unlink(tmpfile)
-    except:
-        pass
+    killpid(tmpfile)
 

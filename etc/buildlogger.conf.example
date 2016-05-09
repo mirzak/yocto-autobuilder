@@ -1,0 +1,8 @@
+[wiki]
+username = BuildlogBotUser
+password = InsertPasswordHere
+pagetitle = BuildLogPageTitle
+apiuri = https://wiki.yoctoproject.org/wiki/api.php
+
+[builder]
+apiuri = https://autobuilder.yoctoproject.org/main/json/builders/nightly/builds/_all

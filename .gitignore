@@ -8,6 +8,7 @@
 ###################################################
 buildset-config
 config/autobuilder.conf
+etc/buildlogger.conf
 
 # Everything else #
 ###################
@@ -25,6 +26,7 @@ yocto-controller/controller.cfg
 yocto-controller/state.sqlite
 yocto-controller/twistd.log*
 yocto-controller/buildbot.tac
+yocto-controller/logger.log
 yocto-worker/build-appliance/build(newcommits)
 yocto-worker/buildbot.tac
 yocto-worker/janitor.log

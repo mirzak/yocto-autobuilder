@@ -81,3 +81,5 @@ QA_MAIL_CC = "buildcc@localhost"
 QA_MAIL_BCC = "buildbcc@localhost"
 QA_MAIL_SIG = "Multiline\nSig\nLine"
 
+[Buildlogger]
+BUILDLOG_TO_WIKI = False

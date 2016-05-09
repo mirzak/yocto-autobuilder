@@ -72,6 +72,15 @@ if os.path.isfile(os.path.join(AB_BASE, ".setupdone")):
         os.chdir(os.path.join(AB_BASE, "yocto-controller"))
         subprocess.call(["make", "start"])
         os.chdir(AB_BASE)
+        if os.environ["BUILDLOG_TO_WIKI"] == "True":
+            logger_log = open('yocto-controller/buildlogger.log', 'a')
+            logger_log.write('[ buildlogger started: %s ]\n' % datetime.datetime.now())
+            subprocess.Popen('python bin/buildlogger ' + os.path.join(AB_BASE, 'etc/buildlogger.conf'),
+                            shell=True, stdin=None,
+                            stdout=logger_log,
+                            stderr=logger_log,
+                            close_fds=True)
+            logger_log.close()
 
     if sys.argv[1] == "worker" or sys.argv[1] == "both":
         if os.environ["PRSERV_HOST"] and os.environ["PRSERV_HOST"] == "localhost":
