@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 '''
 Created on May 5, 2016
 
@@ -196,7 +196,7 @@ def read_last_build():
     try:
         with open(cachefile, 'r') as fi:
             last_build = fi.readline()
-    except FileNotFoundError as ex:
+    except IOError as ex:
         # A build hasn't been logged yet
         pass
     except Exception as e:
