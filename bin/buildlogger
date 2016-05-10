@@ -17,16 +17,23 @@ __email__ = "joshua.g.lock@intel.com"
 # We can set repo url, branch & commit for a bunch of repositorys.
 # Do they all get built for nightly?
 
+import codecs
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
 import json
 import os
-import requests
 import signal
 import sys
 import time
+
+try:
+    import requests
+except ImportError:
+    print("buildlogger requires the 'requests' module (python-requests on "
+          "Fedora and Debian), please install it.")
+    sys.exit(1)
 
 abapi = ''
 # Wiki editing params
@@ -67,17 +74,40 @@ def load_config(configfile):
 
     return success
 
-# we can't rely on the built in JSON parser in the requests module because
+
+# This method papers over some inconsistencies between requests API versions
+# and handles stripping UTF-8 BOM from the beginning of responses from the
+# Yocto Project wiki
+#
+# We can't rely on the built in JSON parser in the requests module because
 # the JSON we get from the wiki begins with a UTF-8 BOM which chokes
-# json.loads().
-# Thus we decode the raw resonse content into a string and load that into a
-# JSON object ourselves.
+# json.loads(), furthermore this convenience API is missing in older requests
+# versions (such as that available in apt on Ubuntu 12.04 LTS).
 #
 # http://en.wikipedia.org/wiki/Byte_Order_Mark
 # http://bugs.python.org/issue18958
 def parse_json(response):
-    text = response.content.decode('utf-8-sig')
+    bom = codecs.BOM_UTF8
+    text = ''
 
+    # In Requests 0.8.2 (Ubuntu 12.04) Response.content has type unicode,
+    # whereas in requests 2.1.10 (Fedora 23) Response.content is a str
+    # Ensure that bom is the same type as the content, codecs.BOM_UTF8 is a str
+    if type(response.content) == unicode:
+        bom = unicode(codecs.BOM_UTF8, 'utf8')
+
+    # If we discover a BOM set the encoding appropriately so that the
+    # built in decoding routines in requests work correctly.
+    if response.content.startswith(bom):
+        response.encoding = 'utf-8-sig'
+
+    # Newer requests has a text property which returns a decoded string
+    if hasattr(response, 'text'):
+        text = response.text
+    # In older requests the content property is a unicode of the decoded
+    # raw contents (in newer requests it's a str which hasn't been decoded)
+    else:
+        text = response.content
     return json.loads(text)
 
 
@@ -210,6 +240,7 @@ def watch_for_builds(configfile):
         print('Failed to start buildlogger.')
         sys.exit(1)
     last_logged = read_last_build()
+    print('buildlogger is running')
 
     while True:
         # wait a minute...
@@ -221,7 +252,7 @@ def watch_for_builds(configfile):
             print("Failed to fetch Autobuilder data. Exiting.")
             continue
         try:
-            build_json = builds.json()
+            build_json = parse_json(builds)
         except Exception as e:
             print("Failed to decode JSON: %s" % str(e))
             continue
@@ -240,6 +271,7 @@ def watch_for_builds(configfile):
             else:
                 print("Failed to post new entry.")
 
+    print('buildlogger is done')
     sys.exit(0)
 
 
