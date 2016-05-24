@@ -488,17 +488,7 @@ if __name__ == '__main__':
         print "Generating the master md5sum table."
         gen_rel_md5(RELEASE_DIR, REL_MD5_FILE)
     
-    # 8) sync to downloads
-    if REL_TYPE == "milestone":
-        DL_DIR = os.path.join(DL_BASE, "milestones", RELEASE)
-        print "DL_DIR for milestones: %s" %DL_DIR
-    else:
-        DL_DIR = os.path.join(DL_BASE, RELEASE)
-        print "DL_DIR for point/major: %s" %DL_DIR
-    print "Publishing release to downloads."
-    sync_it(RELEASE_DIR, DL_DIR, "")
-
-    # 9) Publish the ADT repo. The default is NOT to publish the ADT. The ADT
+    # 8) Publish the ADT repo. The default is NOT to publish the ADT. The ADT
     # is deprecated as of 2.1_M1. However, we need to retain backward
     # compatability for point releases, etc. We do this step after all the other
     #  stuff because we want the symlinks to have been converted, extraneous
