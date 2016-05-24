@@ -340,18 +340,18 @@ def publish_adt(rel_id, rel_type, opts):
             QEMU_TARGET = os.path.join(ADT_ROOTFS, dirname)
             print "QEMU_SRC: %s" %QEMU_SRC
             sync_it(QEMU_SRC, QEMU_TARGET, "")
-
         sync_it(IPK_DIR, ADT_IPK, "")
     return
 
 if __name__ == '__main__':
-
+    
     os.system("clear")
     print
-
+   
     VHOSTS = "/srv/www/vhosts"
     AB_BASE = os.path.join(VHOSTS, "autobuilder.yoctoproject.org/pub/releases")
-    DL_BASE = os.path.join(VHOSTS, "downloads.yoctoproject.org/releases/yocto")
+    DL_DIR = os.path.join(VHOSTS, "downloads.yoctoproject.org/releases")
+    DL_BASE = os.path.join(DL_DIR, "/releases/yocto")
     ADT_BASE = os.path.join(VHOSTS, "adtrepo.yoctoproject.org")
 
     # List of the directories we delete from all releases
@@ -380,7 +380,7 @@ if __name__ == '__main__':
                       help="Use when you need to publish the ADT repo to a custom location. i.e. python adtcopy -b yocto-2.0_M1.rc1 -a 1.8+snaphot")
 
     (options, args) = parser.parse_args()
-
+ 
     REL_TYPE = ""
     MILESTONE = ""
     if options.poky:
@@ -427,12 +427,12 @@ if __name__ == '__main__':
         print "Build ID is a required argument."
         print "Please use -h or --help for options."
         sys.exit()
-
+   
     if not (RELEASE and RC and REL_ID and REL_TYPE):
         print "Can't determine the release type. Check your args."
         print "You gave me: %s" %options.build
         sys.exit()
-
+    
     print "RC_DIR: %s" %RC_DIR
     print "RELEASE: %s" %RELEASE
     print "RC: %s" %RC
@@ -442,7 +442,7 @@ if __name__ == '__main__':
         print "MILESTONE: %s" %MILESTONE
     print
 
-    PLUGIN_DIR = os.path.join(DL_BASE, "eclipse-plugin", REL_ID)
+    PLUGIN_DIR = os.path.join(DL_DIR, "eclipse-plugin", REL_ID)
     RELEASE_DIR = os.path.join(AB_BASE, RELEASE)
     MACHINES = os.path.join(RELEASE_DIR, "machines")
     BSP_DIR = os.path.join(RELEASE_DIR, 'bsptarballs')
@@ -455,7 +455,7 @@ if __name__ == '__main__':
     # For all releases:
     # 1) Rsync the rc candidate to a staging dir where all work happens
     sync_it(RC_SOURCE, RELEASE_DIR, UNLOVED)
-
+    
     # 2) Convert the symlinks in build-appliance dir.
     print "Converting the build-appliance symlink."
     convert_symlinks(BUILD_APP_DIR)
@@ -469,7 +469,7 @@ if __name__ == '__main__':
         nuke_cruft(dirname, CRUFT_LIST)
     print "Generating fresh md5sums."
     gen_md5sum(MACHINES)
-
+    
     # For major and point releases
     if REL_TYPE == "major" or REL_TYPE == "point":
         # 4) Fix up the eclipse and poky tarballs
@@ -487,7 +487,7 @@ if __name__ == '__main__':
         # 7) Generate the master md5sum file for the release (for all releases)
         print "Generating the master md5sum table."
         gen_rel_md5(RELEASE_DIR, REL_MD5_FILE)
-
+    
     # 8) sync to downloads
     if REL_TYPE == "milestone":
         DL_DIR = os.path.join(DL_BASE, "milestones", RELEASE)
