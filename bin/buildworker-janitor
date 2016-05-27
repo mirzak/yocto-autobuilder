@@ -55,6 +55,7 @@ mirrorlist = [
     "git://git.yoctoproject.org/meta-intel",
     "git://git.yoctoproject.org/meta-minnow",
     "git://git.yoctoproject.org/meta-qt3",
+    "git://git.yoctoproject.org/meta-qt4",
     "git://git.yoctoproject.org/poky",
     "git://git.yoctoproject.org/eclipse-poky-kepler",
     "git://git.yoctoproject.org/eclipse-poky-juno"
