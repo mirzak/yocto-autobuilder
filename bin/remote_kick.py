@@ -44,6 +44,7 @@ class RemoteBuild():
         kw['branch_eclipse-poky-luna'] = 'luna-master'
         kw['branch_eclipse-poky-mars'] = 'mars-master'
         kw['branch_oecore'] = 'master'
+        kw['custom_create_eventlog'] = 'False'
         kw['custom_deploy_artifacts'] = 'False'
         kw['custom_is_milestone'] = 'False'
         kw['custom_milestone_number'] = ''
