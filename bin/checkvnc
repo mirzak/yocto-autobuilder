@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# check if vnc server is running, and if not, cleanup and restart
+#
+pid=$(pidof Xvnc)
+if [[ $? != 0 ]]; then
+    echo "Xvnc not running, attempting restart"
+    vncserver -kill :1
+    vncserver
+fi
