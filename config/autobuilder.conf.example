@@ -60,6 +60,9 @@ RESOLVE_TRIGGERED_HEAD = True
 DEVKERNEL_MUT_REPO = "{'git://git.yoctoproject.org/poky-contrib':['stage/master_under_test', 'sgw/mut']}"
 DEVKERNEL = "linux-yocto-dev"
 
+[TestSettings]
+QEMU_USE_KVM = "True"
+
 [ADTREPO Settings]
 ADTREPO_POPULATE = False
 ADTREPO_DEV_POPULATE = True
