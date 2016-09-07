@@ -219,7 +219,7 @@ def write_last_build(buildid):
 
 # Read last logged buildid from a file
 def read_last_build():
-    last_build = ''
+    last_build = '0'
     try:
         with open(cachefile, 'r') as fi:
             last_build = fi.readline()
@@ -254,7 +254,13 @@ def watch_for_builds(configfile):
             print("Failed to decode JSON: %s" % str(e))
             continue
 
-        last_build = sorted(build_json.keys())[-1]
+        # The keys of the JSON dict are unicode strings, which makes
+        # sorting to find the most recent difficult (i.e. for a string type
+        # 999 > 1001). Convert them to ints for a simpler sort.
+        buildids = map(int, build_json.keys())
+        buildids.sort()
+        last_build = str(buildids[-1])
+
         # If a new build is detected, post a new entry to the BuildLog
         if last_build != last_logged:
             new_entry, summary = ab_last_build_to_entry(build_json, last_build)
