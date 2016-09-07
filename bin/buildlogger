@@ -11,12 +11,6 @@ __maintainer__ = "Joshua Lock"
 __email__ = "joshua.g.lock@intel.com"
 '''
 
-# We'd probably benefit from using some caching, but first we'd need the AB API
-# to include
-#
-# We can set repo url, branch & commit for a bunch of repositorys.
-# Do they all get built for nightly?
-
 import codecs
 try:
     import configparser
