@@ -2,7 +2,7 @@
 #
 # check if vnc server is running, and if not, cleanup and restart
 #
-pid=$(pidof Xvnc)
+netstat -tnl | grep :5901 > /dev/null
 if [ $? != 0 ]; then
     echo "Xvnc not running, attempting restart"
     vncserver -kill :1
