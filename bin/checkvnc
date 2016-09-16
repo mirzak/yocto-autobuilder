@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # check if vnc server is running, and if not, cleanup and restart
 #
