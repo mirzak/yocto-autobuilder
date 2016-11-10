@@ -150,7 +150,7 @@ def wiki_login():
 
 
 # Post the new page contents *content* with a summary of the action *summary*
-def wiki_post_page(content, summary, cookies):
+def wiki_post_entry(content, summary, cookies):
     params = '?format=json&action=query&prop=info|revisions&intoken=edit&rvprop=timestamp&titles='
     req = requests.get(wikiapi+params+title, cookies=cookies)
 
@@ -223,7 +223,7 @@ def read_last_build():
     try:
         with open(cachefile, 'r') as fi:
             last_build = fi.readline()
-    except IOError as ex:
+    except IOError:
         # A build hasn't been logged yet
         pass
     except Exception as e:
@@ -267,7 +267,7 @@ def watch_for_builds(configfile):
             blurb, entries = wiki_get_content()
             entries = new_entry+entries
             cookies = wiki_login()
-            if wiki_post_page(blurb+entries, summary, cookies):
+            if wiki_post_entry(blurb+entries, summary, cookies):
                 write_last_build(last_build)
                 last_logged = last_build
                 print("Entry posted:\n%s\n" % new_entry)
@@ -297,9 +297,9 @@ if __name__ == "__main__":
             pass
         # Check if the process that we killed is alive.
         try:
-           os.kill(int(pid), 0)
-        except OSError as ex:
-           pass
+            os.kill(int(pid), 0)
+        except OSError:
+            pass
     elif os.path.exists(tmpfile) and not os.path.isfile(tmpfile):
         raise Exception("""/tmp/.buildlogger.pid is a directory, remove it to continue.""")
     try:
