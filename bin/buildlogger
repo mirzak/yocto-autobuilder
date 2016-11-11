@@ -187,9 +187,15 @@ def ab_last_build_to_entry(build_json, build_id):
     build_info = build_json[build_id]
     builder = build_info.get('builderName', 'Unknown builder')
     reason = build_info.get('reason', 'No reason given')
+    reason_list = reason.split(':', 1)
+    forcedby = reason_list[0]
+    description = 'No reason given.'
+    if len(reason_list) > 1 and reason_list[1] != ' ':
+        description = reason_list[1]
     buildid = build_info.get('number', '')
     buildbranch = ''
     chash = ''
+
     for prop in build_info.get('properties'):
         if prop[0] == 'branch':
             buildbranch = prop[1]
@@ -205,7 +211,7 @@ def ab_last_build_to_entry(build_json, build_id):
     summaryfmt = 'Adding new BuildLog entry for build %s (%s)'
     summary = summaryfmt % (buildid, chash)
     content = "* '''Build ID''' - %s\n" % chash
-    content = content + '* ' + reason + '\n'
+    content = content + '* ' + forcedby + '\n* ' + description + '\n'
     new_entry = '%s\n%s\n' % (section_title, content)
 
     return new_entry, summary
