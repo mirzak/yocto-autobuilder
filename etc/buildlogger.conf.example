@@ -6,4 +6,4 @@ apiuri = https://wiki.yoctoproject.org/wiki/api.php
 
 [builder]
 wwwuri = https://autobuilder.yoctoproject.org/main
-apiuri = https://autobuilder.yoctoproject.org/main/json/builders/nightly/builds/_all
+apiuri = https://autobuilder.yoctoproject.org/main/json

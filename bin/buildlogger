@@ -239,11 +239,13 @@ def watch_for_builds(configfile):
     last_logged = read_last_build()
     print('buildlogger is running')
 
+    nightlyuri = '%s/builders/nightly/builds/_all' % abapi
+
     while True:
         # wait a minute...
         time.sleep(60)
 
-        builds = requests.get(abapi)
+        builds = requests.get(nightlyuri)
 
         if not builds:
             print("Failed to fetch Autobuilder data. Exiting.")
