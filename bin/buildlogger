@@ -21,6 +21,7 @@ import os
 import signal
 import sys
 import time
+import hashlib
 
 try:
     import requests
@@ -37,6 +38,9 @@ pw = ''
 wikiapi = ''
 title = ''
 
+build_logs = {}
+build_failures = {}
+
 last_logged = ''
 # TODO: probably shouldn't write files in the same location as the script?
 cachefile = 'buildlogger.lastbuild'
@@ -51,7 +55,7 @@ def load_config(configfile):
     global wikiapi
     global abapi
     global abwww
-    success = False
+    success = True
 
     if os.path.exists(configfile):
         try:
@@ -63,11 +67,12 @@ def load_config(configfile):
             wikiapi = config.get('wiki', 'apiuri')
             abwww = config.get('builder', 'wwwuri')
             abapi = config.get('builder', 'apiuri')
-            success = True
         except configparser.Error as ex:
             print('Failed to load buildlogger configuration with error: %s' % str(ex))
+            success = False
     else:
         print('Config file %s does not exist, please create and populate it.' % configfile)
+        success = False
 
     return success
 
@@ -105,7 +110,35 @@ def parse_json(response):
     # raw contents (in newer requests it's a str which hasn't been decoded)
     else:
         text = response.content
-    return json.loads(text)
+
+    js = {}
+    if text:
+        js = json.loads(text)
+
+    return js
+
+
+# Rather than failing when a request to a URL throws an exception retry again
+# a minute later. Perform this retry no more than 5 times.
+def retry_request(requesturl, **kwargs):
+    MAX_TRIES = 5
+
+    def try_request():
+        try:
+            req = requests.get(requesturl, **kwargs)
+            return req
+        except requests.exceptions.RequestException:
+            return None
+
+    tries = 0
+    req = None
+    while not req and tries < MAX_TRIES:
+        if tries > 0:
+            time.sleep(60)
+        req = try_request()
+        tries = tries + 1
+
+    return req
 
 
 # Get the current content of the BuildLog page -- to make the wiki page as
@@ -118,7 +151,11 @@ def parse_json(response):
 # 2) the current entries
 def wiki_get_content():
     params = '?format=json&action=query&prop=revisions&rvprop=content&titles='
-    req = requests.get(wikiapi+params+title)
+
+    req = retry_request(wikiapi+params+title)
+    if not req:
+        return None, None
+
     parsed = parse_json(req)
     pageid = sorted(parsed['query']['pages'].keys())[-1]
     content = parsed['query']['pages'][pageid]['revisions'][0]['*']
@@ -139,12 +176,20 @@ def wiki_login():
         'utf8': '',
         'format': 'json'
     }
-    req1 = requests.post(wikiapi, data=payload)
+
+    try:
+        req1 = requests.post(wikiapi, data=payload)
+    except requests.exceptions.RequestException:
+        return None
+
     parsed = parse_json(req1)
     login_token = parsed['login']['token']
 
     payload['lgtoken'] = login_token
-    req2 = requests.post(wikiapi, data=payload, cookies=req1.cookies)
+    try:
+        req2 = requests.post(wikiapi, data=payload, cookies=req1.cookies)
+    except requests.exceptions.RequestException:
+        return None
 
     return req2.cookies.copy()
 
@@ -152,7 +197,9 @@ def wiki_login():
 # Post the new page contents *content* with a summary of the action *summary*
 def wiki_post_entry(content, summary, cookies):
     params = '?format=json&action=query&prop=info|revisions&intoken=edit&rvprop=timestamp&titles='
-    req = requests.get(wikiapi+params+title, cookies=cookies)
+    req = retry_request(wikiapi+params+title, cookies=cookies)
+    if not req:
+        return False
 
     parsed = parse_json(req)
     pageid = sorted(parsed['query']['pages'].keys())[-1]
@@ -161,30 +208,39 @@ def wiki_post_entry(content, summary, cookies):
     edit_cookie = cookies.copy()
     edit_cookie.update(req.cookies)
 
+    content_hash = hashlib.md5(content).hexdigest()
+
     payload = {
         'action': 'edit',
         'assert': 'user',
         'title': title,
         'summary': summary,
         'text': content,
+        'md5': content_hash,
         'token': edit_token,
         'utf8': '',
         'format': 'json'
     }
 
-    req = requests.post(wikiapi, data=payload, cookies=edit_cookie)
+    try:
+        req = requests.post(wikiapi, data=payload, cookies=edit_cookie)
+    except requests.exceptions.RequestException:
+        return False
+
     if not req.status_code == requests.codes.ok:
         print("Unexpected status code %s received when trying to post entry to"
               "the wiki." % req.status_code)
         return False
     else:
-        return True
+        result = parse_json(req)
+        if result.get('edit', []).get('result', '') == 'Success':
+            return True
+        return False
 
 
 # Extract required info about the last build from the Autobuilder's JSON API
 # and format it for entry into the BuildLog, along with a summary of the edit
-def ab_last_build_to_entry(build_json, build_id):
-    build_info = build_json[build_id]
+def ab_last_build_to_entry(build_info, build_id):
     builder = build_info.get('builderName', 'Unknown builder')
     reason = build_info.get('reason', 'No reason given')
     reason_list = reason.split(':', 1)
@@ -246,23 +302,207 @@ def most_recent_build(build_list):
     return str(builds[-1])
 
 
+# Retrieve a list of urls to stdio error logs for :builder and :buildid
+def get_failed_steps_logs(builder, buildid):
+    log_uris = []
+    builduri = '%s/builders/%s/builds/%s' % (abapi, builder, buildid)
+    build = retry_request(builduri)
+    if not build:
+        return None
+
+    build_json = parse_json(build)
+    for step in build_json['steps']:
+        if 'failed' in step['text']:
+            # due to some nuance around supporting older releases this step can
+            # (and often does) fail, but when it does it doesn't cause the build
+            # to fail - ignore it.
+            if step['name'].startswith('GetLayerVersion'):
+                continue
+            for log in step.get('logs', []):
+                if len(log) == 0:
+                    continue
+                log_uris.append(log[1])
+    return log_uris
+
+
+# Update buildlog entry for :parent_buildid with details of failures on
+# :builder build :child_buildid
+def report_failure(builder, child_buildid, parent_buildid):
+    global build_failures
+    global build_logs
+    already_logged = build_failures.get(parent_buildid, [])
+    if builder in already_logged:
+        return True
+
+    blurb, entries = wiki_get_content()
+    if not blurb:
+        return False
+    entry = build_logs[parent_buildid]
+    summary = 'Updating entry for %s with failures in %s' % (parent_buildid, builder)
+
+    log_fmt = ''
+    logs = ''
+    log_entries = get_failed_steps_logs(builder, child_buildid)
+    new_entry = ''
+    if builder == 'nightly':
+        # for failures in nightly we just append extra entries to the bullet
+        # list pointing to the failure logs
+        if not len(log_entries):
+            return True
+        logs = '\n* '.join(log_entries)
+        new_entry = entry.strip() + '\n* ' + logs
+    else:
+        # for non-nightly failures we create an entry in the list linking to
+        # the failed builder and indent the logs as a child bullet list
+        if len(log_entries) > 0:
+            log_fmt = '\n** '
+            logs = '\n** '.join(log_entries)
+            logs = logs + '\n'
+        faileduri = '%s/builders/%s/builds/%s' % (abwww, builder, child_buildid)
+        builderfmt = '[%s %s]' % (faileduri, builder)
+        new_entry = entry.strip() + '\n* %s failed:%s' % (builderfmt, log_fmt) + logs
+    print('replacing:\n\t%s\nwith:\n\t%s\n\n' % (entry, new_entry))
+    update = entries.replace(entry, new_entry, 1)
+    cookies = wiki_login()
+    if wiki_post_entry(blurb+update, summary, cookies):
+        print("Entry updated:\n%s\n" % new_entry)
+        build_logs[parent_buildid] = new_entry
+    else:
+        print("Failed to update entry.")
+        return False
+
+    already_logged.append(builder)
+    build_failures[parent_buildid] = already_logged
+
+    return True
+
+
+# Monitor nightly :buildid for failures in its triggered builds
+def monitor_build(buildid):
+    print('Monitoring build %s' % buildid)
+    build_running = True
+
+    entry = retry_request(abapi)
+    if not entry:
+        print('Failed to monitor build %s' % buildid)
+        return False
+
+    entry_json = parse_json(entry)
+    # Ensure builds have been triggered before continuing
+    triggered = False
+    while not triggered:
+        nightly_uri = '%s/builders/nightly/builds/%s' % (abapi, buildid)
+        nightly = retry_request(nightly_uri)
+        if not nightly:
+            print('Failed to monitor build %s' % buildid)
+            return False
+
+        nightly_json = parse_json(nightly)
+        for step in nightly_json['steps']:
+            if step['name'] == 'trigger':
+                if step.get('isStarted') or 'triggered' in step.get('text', []):
+                    triggered = True
+
+        if not triggered:
+            print('Not triggered yet, waiting...')
+            time.sleep(60*5) # wait 5 minutes
+
+    # Determine which builders were triggered
+    triggered_builds = []
+    for builder in entry_json['builders']:
+        name = str(builder)
+        for sched in entry_json['builders'][name]['schedulers']:
+            # This builder is triggered by a nightly build
+            if sched.startswith('trigger_main-build'):
+                triggered_builds.append(name)
+    # we also want to monitor for failures in the nightly build itself
+    triggered_builds.append('nightly')
+    print('%s triggered builds to watch.' % len(triggered_builds))
+
+    # we now have a list of builders for which a build was triggered
+    # poll the most recent build until nightly is done.
+    while build_running:
+        time.sleep(60*5) # wait 5 minutes
+        print('Build %s still running, checking' % buildid)
+        running_builds = triggered_builds
+        pending_builds = False
+        for builder in triggered_builds:
+            builderuri = '%s/builders/%s' % (abapi, builder)
+            req = retry_request(builderuri)
+            if not req:
+                continue
+            builder_json = parse_json(req)
+
+            if builder_json.get('pendingBuilds'):
+                # skip this builder this time
+                print('%s is pending, skip this time' % builder)
+                pending_builds = True
+                continue
+
+            childid = None
+            state = builder_json.get('state', 'none')
+            if state == 'building':
+                current = builder_json.get('currentBuilds', [])
+                if len(current) > 0:
+                    childid = current[0]
+                else:
+                    childid = most_recent_build(builder_json['cachedBuilds'])
+            elif state == 'idle':
+                childid = most_recent_build(builder_json['cachedBuilds'])
+
+            if not childid:
+                continue
+
+            # try and get the status for the builder / buildid pair
+            builduri = '%s/builders/%s/builds/%s' % (abapi, builder, childid)
+            build = retry_request(builduri)
+            if not build:
+                continue
+
+            build_json = parse_json(build)
+            if 'failed' in build_json['text']:
+                if report_failure(builder, childid, buildid):
+                    print('%s build %s failed, no longer monitoring.' % (builder, childid))
+                    running_builds.remove(builder)
+                    print('Removing failed builder %s' % builder)
+            elif 'successful'in build_json['text']:
+                # this build is done so we don't need to poll it next loop
+                print('%s build %s was successful, no longer monitoring.' % (builder, childid))
+                running_builds.remove(builder)
+
+        # We're done monitoring this build if all builders have completed and
+        # there aren't any pending builds
+        triggered_builds = running_builds
+        if pending_builds or len(triggered_builds) > 0:
+            build_running = True
+            print('Build %s still running, %s builds in the queue (%s).' % (buildid, len(triggered_builds), ', '.join(triggered_builds)))
+        else:
+            build_running = False
+            print('Build %s marked as no longer running.' % buildid)
+
+    # Once we're done with monitoring this build we need to remove associated
+    # builds from the list of failures (so that the dictionary doesn't just
+    # keep growing in memory).
+    # TODO: have all triggered builds finished at this point?
+    global build_logs
+    del build_logs[buildid]
+    return True
+
+
 def watch_for_builds(configfile):
     if not load_config(configfile):
-        print('Failed to start buildlogger.')
-        sys.exit(1)
+        print("Failed to start buildlogger.")
+        return False
     last_logged = read_last_build()
-    print('buildlogger is running')
+    print("buildlogger is running")
 
     nightlyuri = '%s/builders/nightly/builds/_all' % abapi
 
     while True:
-        # wait a minute...
-        time.sleep(60)
-
-        builds = requests.get(nightlyuri)
-
+        #print('watching')
+        builds = retry_request(nightlyuri)
         if not builds:
-            print("Failed to fetch Autobuilder data. Exiting.")
+            print("Failed to fetch Autobuilder data. Waiting.")
             continue
         try:
             build_json = parse_json(builds)
@@ -273,20 +513,34 @@ def watch_for_builds(configfile):
         last_build = most_recent_build(build_json.keys())
 
         # If a new build is detected, post a new entry to the BuildLog
+        # and watch it and any triggered builds
         if last_build != last_logged:
-            new_entry, summary = ab_last_build_to_entry(build_json, last_build)
+            new_entry, summary = ab_last_build_to_entry(build_json[last_build], last_build)
             blurb, entries = wiki_get_content()
+            if not blurb:
+                print("Failed to get wiki content, couldn't post an update for build %s" % last_build)
+                return False
             entries = new_entry+entries
             cookies = wiki_login()
+            if not cookies:
+                print("Failed to login to wiki, couldn't post an update for build %s" % last_build)
+                continue
             if wiki_post_entry(blurb+entries, summary, cookies):
                 write_last_build(last_build)
                 last_logged = last_build
-                print("Entry posted:\n%s\n" % new_entry)
+                build_logs[last_build] = new_entry
+                print("Entry posted for build %s:\n%s\n" % (last_build, new_entry))
+                if not monitor_build(last_build):
+                    print("Monitoring of build %s failed." % last_build)
+                else:
+                    print("Monitoring of build %s complete." % last_build)
             else:
                 print("Failed to post new entry.")
+        # wait 5 minutes...
+        time.sleep(60*5)
 
-    print('buildlogger is done')
-    sys.exit(0)
+    print("buildlogger is done")
+    return True
 
 
 if __name__ == "__main__":
@@ -320,4 +574,7 @@ if __name__ == "__main__":
     with open(tmpfile, 'w') as f:
         f.write(str(os.getpid()))
 
-    watch_for_builds(sys.argv[1])
+    if not watch_for_builds(sys.argv[1]):
+        print('Failed to watch for builds')
+        sys.exit(1)
+    sys.exit(0)
