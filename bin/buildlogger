@@ -238,6 +238,14 @@ def read_last_build():
     return last_build
 
 
+# The keys of the JSON dict are unicode strings, which makes sorting to find
+# the most recent difficult (i.e. for a string type 999 > 1001)
+def most_recent_build(build_list):
+    builds = map(int, build_list)
+    builds.sort()
+    return str(builds[-1])
+
+
 def watch_for_builds(configfile):
     if not load_config(configfile):
         print('Failed to start buildlogger.')
@@ -262,12 +270,7 @@ def watch_for_builds(configfile):
             print("Failed to decode JSON: %s" % str(e))
             continue
 
-        # The keys of the JSON dict are unicode strings, which makes
-        # sorting to find the most recent difficult (i.e. for a string type
-        # 999 > 1001). Convert them to ints for a simpler sort.
-        buildids = map(int, build_json.keys())
-        buildids.sort()
-        last_build = str(buildids[-1])
+        last_build = most_recent_build(build_json.keys())
 
         # If a new build is detected, post a new entry to the BuildLog
         if last_build != last_logged:
