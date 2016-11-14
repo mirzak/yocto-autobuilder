@@ -75,7 +75,7 @@ if os.path.isfile(os.path.join(AB_BASE, ".setupdone")):
         if os.environ["BUILDLOG_TO_WIKI"] == "True":
             logger_log = open('yocto-controller/buildlogger.log', 'a')
             logger_log.write('[ buildlogger started: %s ]\n' % datetime.datetime.now())
-            subprocess.Popen('python bin/buildlogger ' + os.path.join(AB_BASE, 'etc/buildlogger.conf'),
+            subprocess.Popen('python bin/buildlogger ' + os.path.join(AB_BASE, 'config/buildlogger.conf'),
                             shell=True, stdin=None,
                             stdout=logger_log,
                             stderr=logger_log,
