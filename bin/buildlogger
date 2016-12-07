@@ -349,7 +349,7 @@ def report_failure(builder, child_buildid, parent_buildid):
         # list pointing to the failure logs
         if not len(log_entries):
             return True
-        logs = '\n* '.join(log_entries)
+        logs = '\n* '.join(log_entries) + '\n'
         new_entry = entry.strip() + '\n* ' + logs
     else:
         # for non-nightly failures we create an entry in the list linking to
