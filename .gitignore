@@ -6,7 +6,6 @@
 
 # Configuration hunks, changed by anyone using AB #
 ###################################################
-buildset-config
 config/autobuilder.conf
 config/buildlogger.conf
 
